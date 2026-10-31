@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy – [APP_NAME]</title>
+<style>
+  body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;max-width:760px;margin:0 auto;padding:24px 18px;line-height:1.65;color:#1b2338}
+  h1{color:#0f1b3d} h2{color:#0f1b3d;margin-top:2em;border-bottom:1px solid #dfe4ef;padding-bottom:4px}
+  table{border-collapse:collapse;width:100%;font-size:.95em} td,th{border:1px solid #dfe4ef;padding:8px;text-align:left;vertical-align:top}
+  th{background:#f3f5fb}
+</style>
+</head>
+<body>
+<h1>Privacy Policy</h1>
+<p><strong>App:</strong> [APP_NAME] ("the App") &nbsp;|&nbsp; <strong>Developer:</strong> [DEVELOPER_NAME] ("we", "us")<br>
+<strong>Contact:</strong> [CONTACT_EMAIL] &nbsp;|&nbsp; <strong>Last updated:</strong> [DATE]</p>
+
+<p>[APP_NAME] is an online teaching whiteboard. Teachers create classrooms and teach live; students join with a link and a name. This policy explains what information we collect, why, how it is protected, and the choices you have.</p>
+
+<h2>1. Information we collect</h2>
+<table>
+<tr><th>Who</th><th>Data</th><th>Why</th></tr>
+<tr><td>Teachers</td><td>Email address, name (optional), password (stored only as a secure hash by our authentication provider), subscription plan</td><td>Create and secure your account, provide the service, manage your plan</td></tr>
+<tr><td>Students</td><td>Display name entered when joining; an anonymous technical session ID; the work students draw or write on their private board; submissions sent to the teacher</td><td>Let the student join the correct classroom, keep their work private, deliver submissions and feedback to the teacher</td></tr>
+<tr><td>Teachers</td><td>Saved whiteboards, uploaded images and PDF files, and lecture recordings (including microphone audio) you choose to create</td><td>Provide teaching, storage and download features</td></tr>
+<tr><td>All users</td><td>Basic technical data such as connection status, app version and error logs</td><td>Keep the service working, prevent abuse, fix problems</td></tr>
+</table>
+<p>Students do not need an email address or account. We do <strong>not</strong> collect precise location, contacts, photos library access (only files you pick), or advertising identifiers.</p>
+
+<h2>2. Device permissions</h2>
+<ul>
+<li><strong>Microphone:</strong> only when a teacher starts a lecture recording. Audio is not recorded at any other time.</li>
+<li><strong>Files/photos you select:</strong> only the images or PDFs you choose to insert.</li>
+<li><strong>Internet access:</strong> required for live classes.</li>
+</ul>
+
+<h2>3. How we use information</h2>
+<p>To operate classrooms, sync the whiteboard in real time, enforce tool permissions, deliver student submissions and teacher feedback, provide premium features, secure the service, and respond to support requests. We do not sell personal information and we do not show third-party advertising.</p>
+
+<h2>4. Who can see your information</h2>
+<ul>
+<li>A student's private board and submissions are visible only to that student and the teacher of that classroom. Students cannot see each other's work.</li>
+<li>A teacher's private classrooms, materials and recordings are visible only to that teacher, except material the teacher chooses to share with the classroom.</li>
+<li><strong>Service providers:</strong> we use Supabase (database, authentication and file storage) to host data on our behalf. Providers may process data only to provide their services to us.</li>
+<li>We may disclose information if required by law or to protect safety and rights.</li>
+</ul>
+
+<h2>5. Children and students</h2>
+<p>The App is intended for teachers and for students aged 13 and over. It is not directed to children under 13, and we do not knowingly collect personal information from children under 13. Students join with a nickname or first name only. If you believe a child under 13 has used the App, contact us at [CONTACT_EMAIL] and we will delete the related data. Teachers and schools are responsible for obtaining any consent required by local law before inviting students who are minors.
+<h2>6. Screenshot and screen-recording protection</h2>
+<p>To protect teaching material and student privacy, the App may block or discourage screenshots and screen recording and may display a watermark containing the student's display name and classroom identity. No technical measure can fully prevent capture on every device; do not rely on it as absolute protection.</p>
+
+<h2>7. Data security</h2>
+<p>Data is transmitted over encrypted connections (HTTPS/TLS). Access to data is restricted by account and classroom using database access rules, and private files are stored in private storage. No system is perfectly secure, but we work to protect your information.</p>
+
+<h2>8. Data retention and deletion</h2>
+<ul>
+<li><strong>Teachers</strong> can delete their account inside the App (Settings → Delete account) or by visiting [ACCOUNT_DELETION_URL] or emailing [CONTACT_EMAIL]. Deleting an account removes the profile, classrooms, student sessions, submissions, uploaded files and recordings, except where we must keep limited records by law. Deletion is completed within 30 days.</li>
+<li><strong>Students</strong> can ask their teacher to remove their session and work, or email us at [CONTACT_EMAIL].</li>
+<li>Closed classrooms and their student data are deleted after [RETENTION_PERIOD, e.g. 12 months] unless the teacher keeps them.</li>
+</ul>
+
+<h2>9. Your rights</h2>
+<p>Depending on where you live, you may have the right to access, correct, delete or export your data, and to object to or restrict processing. Contact us at [CONTACT_EMAIL] and we will respond within a reasonable time.</p>
+
+<h2>10. Subscriptions and payments</h2>
+<p>Premium plans, when offered, are billed through Google Play or Apple App Store. We do not receive or store your card details.</p>
+
+<h2>11. International transfers</h2>
+<p>Our hosting provider may store data on servers outside your country. We take steps so that your data remains protected.</p>
+
+<h2>12. Changes to this policy</h2>
+<p>We may update this policy. The latest version will always be available at this address, with the "Last updated" date changed. Significant changes will be notified in the App.</p>
+
+<h2>13. Contact</h2>
+<p>[DEVELOPER_NAME]<br>Email: [CONTACT_EMAIL]<br>Address: [POSTAL_ADDRESS]</p>
+</body>
+</html>
