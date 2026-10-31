@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Whiteboard</title>
+<style>
+:root{--navy:#12214a;--indigo:#5b5fd6;--bg:#f4f6fb;--card:#fff;--line:#dbe1ee;--text:#1b2338;--mute:#667091;--ok:#1f9d6b;--warn:#e08a1e;--bad:#c63d4a}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1226;--card:#161d38;--line:#2a3558;--text:#e8ecf8;--mute:#9aa5c7}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:720px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.narrow{max-width:420px;margin:8vh auto 0}
+h1{margin:0 0 4px;font-size:1.5rem;color:var(--navy)}
+@media(prefers-color-scheme:dark){h1{color:#fff}}
+h2{font-size:1.1rem;margin:0 0 10px}
+.sub,.mute{color:var(--mute);margin:0 0 12px;font-size:.92rem}
+label{display:block;margin:10px 0;font-size:.9rem;color:var(--mute)}
+input[type=text],input[type=email],input[type=password],input:not([type]){width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);font:inherit;margin-top:4px}
+button{min-height:44px;padding:0 18px;border:0;border-radius:12px;background:var(--navy);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+button.alt{background:transparent;color:var(--indigo);border:1px solid var(--line)}
+button.ok{background:var(--ok)} button.bad{background:var(--bad)}
+button.sm{min-height:36px;padding:0 12px;font-size:.85rem}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.between{justify-content:space-between}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--bg);border-radius:12px;padding:12px;text-align:center}
+.stat b{display:block;font-size:1.5rem}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.78rem;background:var(--bg);border:1px solid var(--line)}
+.b-ok{color:var(--ok)} .b-warn{color:var(--warn)} .b-bad{color:var(--bad)}
+.err{color:var(--bad)} .okt{color:var(--ok)}
+.links{font-size:.9rem;display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+a,.lnk{color:var(--indigo);cursor:pointer;text-decoration:none}
+.item{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.linkbox{word-break:break-all;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px;font-size:.9rem}
+.tog{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+:focus-visible{outline:3px solid var(--indigo);outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// Public values only (protected by database security rules). NEVER put a secret/service_role key here.
+const SUPABASE_URL = "https://knbnakhgpjuxbcmdqsaa.supabase.co";
+const SUPABASE_KEY = "sb_publishable_AD-U_0RBZHhvZW4y4SiGvA_RTr8sHLj";
+const BASE = "https://mechanicalhamdard-create.github.io/whiteboard-public/app/";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const app = document.getElementById("app");
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let timer = null;
+const stop = () => { if (timer) clearInterval(timer); timer = null; };
+const say = (t, bad) => { const m = $("#msg"); if (m) { m.textContent = t; m.className = bad ? "err" : "okt"; } };
+const friendly = e => (e && e.message) ? e.message : "Something went wrong. Try again.";
+
+/* ---------- Teacher: sign in / register / reset ---------- */
+function viewAuth(mode = "login") {
+  stop();
+  const label = { login: "Sign in", register: "Create account", reset: "Send reset link" }[mode];
+  app.innerHTML = `<main class="card narrow"><h1>Whiteboard</h1><p class="sub">Teacher account</p>
+    ${mode === "register" ? '<label>Your name<input id="nm" autocomplete="name"></label>' : ""}
+    <label>Email<input id="em" type="email" autocomplete="email"></label>
+    ${mode !== "reset" ? '<label>Password (8+ characters)<input id="pw" type="password" autocomplete="current-password"></label>' : ""}
+    <button id="go" style="width:100%">${label}</button><p id="msg"></p>
+    <div class="links">
+      ${mode !== "login" ? '<span class="lnk" data-m="login">Sign in</span>' : ""}
+      ${mode !== "register" ? '<span class="lnk" data-m="register">Create account</span>' : ""}
+      ${mode !== "reset" ? '<span class="lnk" data-m="reset">Forgot password</span>' : ""}
+      <a href="../privacy-policy.html">Privacy policy</a></div></main>`;
+  document.querySelectorAll("[data-m]").forEach(el => el.onclick = () => viewAuth(el.dataset.m));
+  $("#go").onclick = async () => {
+    const email = $("#em").value.trim(), pw = $("#pw") ? $("#pw").value : "";
+    if (!email) return say("Enter your email.", true);
+    if (mode !== "reset" && pw.length < 8) return say("Password must be at least 8 characters.", true);
+    $("#go").disabled = true;
+    try {
+      if (mode === "login") {
+        const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+        if (error) throw error; return viewDash();
+      }
+      if (mode === "register") {
+        const { error } = await sb.auth.signUp({ email, password: pw,
+          options: { data: { full_name: $("#nm").value.trim() }, emailRedirectTo: BASE } });
+        if (error) throw error; say("Check your email and tap the confirmation link, then sign in.");
+      } else {
+        const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: BASE });
+        if (error) throw error; say("If that email has an account, a reset link is on its way.");
+      }
+    } catch (e) { say(friendly(e), true); }
+    $("#go").disabled = false;
+  };
+}
+
+function viewNewPass() {
+  stop();
+  app.innerHTML = `<main class="card narrow"><h1>New password</h1>
+    <label>New password (8+ characters)<input id="pw" type="password" autocomplete="new-password"></label>
+    <button id="go" style="width:100%">Save password</button><p id="msg"></p></main>`;
+  $("#go").onclick = async () => {
+    const pw = $("#pw").value;
+    if (pw.length < 8) return say("Password must be at least 8 characters.", true);
+    const { error } = await sb.auth.updateUser({ password: pw });
+    if (error) return say(friendly(error), true);
+    history.replaceState(null, "", BASE); viewDash();
+  };
+}
+
+/* ---------- Teacher: dashboard ---------- */
+async function viewDash() {
+  stop();
+  const { data: u } = await sb.auth.getUser();
+  if (!u.user || u.user.is_anonymous) return viewAuth();
+  const [cl, ss, sub] = await Promise.all([
+    sb.from("classrooms").select("*").order("created_at", { ascending: false }),
+    sb.from("student_sessions").select("classroom_id,status"),
+    sb.from("subscriptions").select("plan_id").eq("status", "active").limit(1)
+  ]);
+  const classes = cl.data || [], sessions = ss.data || [];
+  const live = sessions.filter(s => s.status === "admitted").length;
+  const wait = sessions.filter(s => s.status === "pending").length;
+  const plan = (sub.data && sub.data[0] && sub.data[0].plan_id) || "free";
+  app.innerHTML = `<main>
+    <div class="row between" style="margin-bottom:12px"><div><h1>Dashboard</h1>
+      <span class="badge">${esc(plan)} plan</span></div><button class="alt sm" id="out">Sign out</button></div>
+    <div class="card stats"><div class="stat"><b>${classes.length}</b>Classrooms</div>
+      <div class="stat"><b>${live}</b>Students in</div><div class="stat"><b>${wait}</b>Waiting</div></div>
+    <div class="card"><h2>Create a classroom</h2><label>Class name<input id="t" maxlength="120" placeholder="Maths – Grade 9"></label>
+      <button id="mk">Create classroom</button><p id="msg"></p></div>
+    <div class="card"><h2>My classrooms</h2>
+      ${classes.length ? classes.map(c => `<div class="item"><div><b>${esc(c.title)}</b><br>
+        <span class="badge ${c.status === "open" ? "b-ok" : "b-bad"}">${c.status}</span></div>
+        <button class="sm" data-id="${c.id}">Open</button></div>`).join("")
+        : '<p class="mute">No classrooms yet. Create your first one above.</p>'}</div>
+    <p class="mute">Recordings, submissions and uploads appear here in later stages.</p></main>`;
+  $("#out").onclick = async () => { await sb.auth.signOut(); viewAuth(); };
+  $("#mk").onclick = async () => {
+    const title = $("#t").value.trim();
+    if (!title) return say("Enter a class name.", true);
+    const { data, error } = await sb.from("classrooms").insert({ teacher_id: u.user.id, title }).select().single();
+    if (error) return say(friendly(error), true);
+    viewClass(data.id);
+  };
+  document.querySelectorAll("button[data-id]").forEach(b => b.onclick = () => viewClass(b.dataset.id));
+}
+
+/* ---------- Teacher: one classroom ---------- */
+async function viewClass(id) {
+  stop();
+  const { data: c, error } = await sb.from("classrooms").select("*").eq("id", id).single();
+  if (error || !c) return viewDash();
+  const link = BASE + "?c=" + c.join_code;
+  const tg = (k, t) => `<div class="tog"><span>${t}</span><input type="checkbox" data-k="${k}" ${c[k] ? "checked" : ""} style="width:22px;height:22px"></div>`;
+  app.innerHTML = `<main>
+    <div class="row between" style="margin-bottom:12px"><button class="alt sm" id="back">← Back</button>
+      <span class="badge ${c.status === "open" ? "b-ok" : "b-bad"}">${c.status}</span></div>
+    <div class="card"><h1>${esc(c.title)}</h1><p class="sub">Class code ${esc(c.join_code)}</p>
+      <div class="linkbox" id="lk">${esc(link)}</div>
+      <div class="row" style="margin-top:10px"><button class="sm" id="cp">Copy link</button>
+      <a href="https://wa.me/?text=${encodeURIComponent("Join my class: " + link)}" target="_blank" rel="noopener"><button class="alt sm">Share on WhatsApp</button></a></div></div>
+    <div class="card"><h2>Class controls</h2>
+      ${tg("join_enabled", "Students can join")}${tg("requires_approval", "Waiting room (I admit each student)")}
+      ${tg("student_editing", "Students can write")}${tg("submissions_enabled", "Students can submit work")}
+      <label>Class password (leave empty for none)<input id="pwd" type="password" autocomplete="new-password"></label>
+      <div class="row"><button class="sm" id="spw">Save password</button>
+      ${c.status === "open" ? '<button class="bad sm" id="cls">Close classroom</button>' : ""}</div><p id="msg"></p></div>
+    <div class="card"><h2>Students</h2><div id="list"><p class="mute">Loading…</p></div></div></main>`;
+  $("#back").onclick = viewDash;
+  $("#cp").onclick = async () => { try { await navigator.clipboard.writeText(link); say("Link copied."); } catch { say("Press and hold the link to copy it.", true); } };
+  document.querySelectorAll("input[data-k]").forEach(i => i.onchange = async () => {
+    const { error } = await sb.from("classrooms").update({ [i.dataset.k]: i.checked }).eq("id", id);
+    if (error) { i.checked = !i.checked; say(friendly(error), true); } else say("Saved.");
+  });
+  $("#spw").onclick = async () => {
+    const { error } = await sb.rpc("set_classroom_password", { p_class: id, p_password: $("#pwd").value });
+    error ? say(friendly(error), true) : say($("#pwd").value ? "Password set." : "Password removed.");
+  };
+  if ($("#cls")) $("#cls").onclick = async () => {
+    if (!confirm("Close this classroom? Students will lose access.")) return;
+    await sb.from("classrooms").update({ status: "closed" }).eq("id", id); viewClass(id);
+  };
+  const load = async () => {
+    const { data } = await sb.from("student_sessions").select("*").eq("classroom_id", id).order("joined_at");
+    const rows = (data || []).filter(s => s.status !== "rejected" && s.status !== "removed");
+    $("#list").innerHTML = rows.length ? rows.map(s => `<div class="item"><div><b>${esc(s.display_name)}</b><br>
+      <span class="badge ${s.status === "admitted" ? "b-ok" : "b-warn"}">${s.status === "admitted" ? "in class" : "waiting"}</span></div>
+      <div class="row">${s.status === "pending" ? `<button class="ok sm" data-a="admitted" data-s="${s.id}">Admit</button><button class="bad sm" data-a="rejected" data-s="${s.id}">Reject</button>`
+        : `<button class="bad sm" data-a="removed" data-s="${s.id}">Remove</button>`}</div></div>`).join("")
+      : '<p class="mute">No students yet. Share the link above.</p>';
+    document.querySelectorAll("button[data-s]").forEach(b => b.onclick = async () => {
+      await sb.from("student_sessions").update({ status: b.dataset.a }).eq("id", b.dataset.s); load();
+    });
+  };
+  load(); timer = setInterval(load, 4000);
+}
+
+/* ---------- Student: join by link (no email) ---------- */
+async function viewJoin(code) {
+  stop();
+  const { data: s } = await sb.auth.getSession();
+  if (s.session && !s.session.user.is_anonymous)
+    return app.innerHTML = `<main class="card narrow"><h1>Student link</h1><p>You are signed in as a teacher in this browser. Open this link in a private window or another browser to join as a student.</p></main>`;
+  app.innerHTML = `<main class="card narrow"><h1>Join class</h1><p class="sub">Use your first name or a nickname.</p>
+    <label>Your name<input id="nm" maxlength="60" autocomplete="nickname"></label>
+    <label>Class password (if your teacher gave one)<input id="pw" type="password"></label>
+    <button id="go" style="width:100%">Join</button><p id="msg"></p>
+    <div class="links"><a href="../privacy-policy.html">Privacy policy</a></div></main>`;
+  $("#go").onclick = async () => {
+    const name = $("#nm").value.trim();
+    if (!name) return say("Enter your name.", true);
+    $("#go").disabled = true;
+    try {
+      if (!s.session) { const { error } = await sb.auth.signInAnonymously(); if (error) throw error; }
+      const { data: sid, error } = await sb.rpc("join_classroom", { p_code: code, p_name: name, p_password: $("#pw").value || null });
+      if (error) throw error;
+      waitRoom(sid);
+    } catch (e) { say(friendly(e), true); $("#go").disabled = false; }
+  };
+}
+
+function waitRoom(sid) {
+  const check = async () => {
+    const { data } = await sb.from("student_sessions").select("status,display_name").eq("id", sid).single();
+    if (!data) return;
+    if (data.status === "admitted") { stop(); app.innerHTML = `<main class="card narrow"><h1>You're in, ${esc(data.display_name)}</h1><p>Your teacher admitted you. The whiteboard opens here in the next stage.</p></main>`; }
+    else if (data.status === "pending") app.innerHTML = `<main class="card narrow"><h1>Waiting for your teacher</h1><p class="sub">Stay on this page. You'll enter as soon as you are admitted.</p></main>`;
+    else { stop(); app.innerHTML = `<main class="card narrow"><h1>Not admitted</h1><p>Your teacher did not admit you to this class.</p></main>`; }
+  };
+  check(); timer = setInterval(check, 3000);
+}
+
+/* ---------- Start ---------- */
+sb.auth.onAuthStateChange(ev => { if (ev === "PASSWORD_RECOVERY") viewNewPass(); });
+(async () => {
+  const code = new URLSearchParams(location.search).get("c");
+  if (code) return viewJoin(code.trim().toUpperCase());
+  if (location.hash.includes("type=recovery")) return;
+  const { data } = await sb.auth.getSession();
+  data.session && !data.session.user.is_anonymous ? viewDash() : viewAuth();
+})();
+</script>
+</body>
+</html>
